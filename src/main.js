@@ -51,6 +51,7 @@ var load = loader({
       return validator({
         prefix:  'hooks/v1/',
         aws:     cfg.aws.validator,
+        publish: cfg.app.publishMetaData,
       });
     },
   },
