@@ -33,6 +33,16 @@ class PulseMessages {
   createListener(options) {
     await this.setup(options);
   }
+
+  updateListener() {
+
+  }
+  deleteListesner() {
+
+  }
+  createListener(options) {
+    await setup(options);
+  }
   /**
    * Set up the pulse message listener.
   */
@@ -79,12 +89,13 @@ class PulseMessages {
         listener.on('message',
           (message) => handleMessage(message, hook.hookGroupId, hook.hookId));
 
-        listener.resume();
-        this.listeners.push(listener);
-      }
-    },
-  });
+          listener.resume();
+          this.listeners.push(listener);
+        }
+      },
+    });
+  }
 }
-}
+
 
 module.exports = PulseMessages;

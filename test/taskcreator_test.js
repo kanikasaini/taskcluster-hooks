@@ -31,55 +31,55 @@ suite('TaskCreator', function() {
   });
 
   var defaultHook = {
-    hookGroupId:        'tc-hooks-tests',
-    hookId:             'tc-test-hook',
-    metadata:           {},
-    task:               {
-      provisionerId:    'no-provisioner',
-      workerType:       'test-worker',
-      schedulerId:      'my-scheduler',
-      taskGroupId:      'dSlITZ4yQgmvxxAi4A8fHQ',
-      scopes:           [],
-      payload:          {},
-      metadata:         {
-        name:           'Unit testing task',
-        description:    'Task created during unit tests',
-        owner:          'amiyaguchi@mozilla.com',
-        source:         'http://github.com/',
-      },
-      tags: {
-        purpose:        'taskcluster-testing',
-      },
-    },
-    bindings:           [],
-    deadline:           '1 day',
-    expires:            '1 day',
-    schedule:           {format: {type: 'none'}},
-    triggerToken:       taskcluster.slugid(),
-    lastFire:           {},
-    nextTaskId:         taskcluster.slugid(),
-    nextScheduledDate:  new Date(2000, 0, 0, 0, 0, 0, 0),
-    triggerSchema:      {
-      type: 'object',
-      properties: {
-        location: {
-          type: 'string',
-          default: 'Niskayuna, NY',
-        }, 
-        otherVariable: {
-          type: 'integer',
-          default: '12',
+      hookGroupId:        'tc-hooks-tests',
+      hookId:             'tc-test-hook',
+      metadata:           {},
+      task:               {
+        provisionerId:    'no-provisioner',
+        workerType:       'test-worker',
+        schedulerId:      'my-scheduler',
+        taskGroupId:      'dSlITZ4yQgmvxxAi4A8fHQ',
+        scopes:           [],
+        payload:          {},
+        metadata:         {
+          name:           'Unit testing task',
+          description:    'Task created during unit tests',
+          owner:          'amiyaguchi@mozilla.com',
+          source:         'http://github.com/',
+        },
+        tags: {
+          purpose:        'taskcluster-testing',
         },
       },
-      additionalProperties: false,
-    },
-    pulseExchanges:     [],
-  };
+      bindings:           [],
+      deadline:           '1 day',
+      expires:            '1 day',
+      schedule:           {format: {type: 'none'}},
+      triggerToken:       taskcluster.slugid(),
+      lastFire:           {},
+      nextTaskId:         taskcluster.slugid(),
+      nextScheduledDate:  new Date(2000, 0, 0, 0, 0, 0, 0),
+      triggerSchema:      {
+        type: 'object',
+        properties: {
+          location: {
+            type: 'string',
+            default: 'Niskayuna, NY',
+          }, 
+          otherVariable: {
+            type: 'integer',
+            default: '12',
+          },
+        },
+        additionalProperties: false,
+      },
+      pulseExchanges:     [],
+  }; 
 
   var createTestHook = async function(scopes, extra) {
     let hook = _.cloneDeep(defaultHook);
-    hook.task.extra = extra;
-    hook.task.scopes = scopes;
+    hook.task.then.extra = extra;
+    hook.task.then.scopes = scopes;
     return await helper.Hook.create(hook);
   };
 
@@ -88,7 +88,7 @@ suite('TaskCreator', function() {
     let taskId = taskcluster.slugid();
     let resp = await creator.fire(hook, {context: true, firedBy: 'schedule'}, {taskId});
     assume(resp.status.taskId).equals(taskId);
-    assume(resp.status.workerType).equals(hook.task.workerType);
+    assume(resp.status.workerType).equals(hook.task.then.workerType);
   });
 
   test('firing a real task with a JSON-e context succeeds', async function() {
@@ -112,9 +112,9 @@ suite('TaskCreator', function() {
 
   test('firing a real task that sets its own task times works', async function() {
     let hook = _.cloneDeep(defaultHook);
-    hook.task.created = {$fromNow: '0 seconds'};
-    hook.task.deadline = {$fromNow: '1 minute'};
-    hook.task.expires = {$fromNow: '2 minutes'};
+    hook.task.then.created = {$fromNow: '0 seconds'};
+    hook.task.then.deadline = {$fromNow: '1 minute'};
+    hook.task.then.expires = {$fromNow: '2 minutes'};
     return await helper.Hook.create(hook);
     let taskId = taskcluster.slugid();
     let resp = await creator.fire(hook, {}, {taskId});
@@ -146,7 +146,7 @@ suite('TaskCreator', function() {
     let hook = await createTestHook(['project:taskcluster:tests:tc-hooks:scope/required/for/task/1'],
       {context:'${context}'});
     let resp = await creator.fire(hook, {context: true});
-    assume(resp.status.workerType).equals(hook.task.workerType);
+    assume(resp.status.workerType).equals(hook.task.then.workerType);
   });
 
   test('fails if task.scopes includes scopes not granted to the role', async function() {
