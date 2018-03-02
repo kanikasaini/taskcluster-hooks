@@ -23,71 +23,51 @@ class PulseMessages {
     this.exchange = exchange;
     this.routingKeyPattern = routingKeyPattern;
   }
-  
-  updateListener() {
-
-  }
-  deleteListesner() {
-
-  }
-  createListener(options) {
-    await this.setup(options);
-  }
-
-  updateListener() {
-
-  }
-  deleteListesner() {
-
-  }
-  createListener(options) {
-    await setup(options);
-  }
   /**
    * Set up the pulse message listener.
   */
 
- async setup(options) {
-  options = options || {};
-  
-  assert(!this.connection, 'You can not setup twice!');
-  this.connection = new taskcluster.PulseConnection({
-    username: this.credentials.username,
-    password: this.credentials.password,
-  });
-
-  this.listeners = [];
-
-  const handleMessage = async (message, hookGroupId, hookId) => {
-    // get hook (in case it has changed)
-    let hook = await this.Hook.load({
-      hookGroupId: hookGroupId,
-      hookId: hookId,
-    }, true);
+  async setup(options) {
+    options = options || {};
     
-    //fire 
-    this.taskcreator.fire(hook, message.payload);
-  };
+    assert(!this.connection, 'You can not setup twice!');
+    this.connection = new taskcluster.PulseConnection({
+      username: this.credentials.username,
+      password: this.credentials.password,
+    });
 
-  await this.Hook.scan({}, {
-    handler: hook => {
-      if (hook.pulseExchanges.length > 0) {        
-        var listener = new taskcluster.PulseListener({
-          connection: this.connection,
-          queueName: [hook.hookGroupId, '/', hook.hookId].join(''),
-        });
-        
-        hook.pulseExchanges.forEach(pulses => {
-          console.log(`Binding to ${pulses.exchange} (${pulses.routingKeyPattern}) \
-                       for ${hook.hookGroupId}/${hook.hookId}`);
-          listener.bind({
-            exchange: pulses.exchange, 
-            routingKeyPattern: pulses.routingKeyPattern,
+    this.listeners = [];
+
+    const handleMessage = async (message, hookGroupId, hookId) => {
+      // get hook (in case it has changed)
+      let hook = await this.Hook.load({
+        hookGroupId: hookGroupId,
+        hookId: hookId,
+      }, true);
+      
+      //fire 
+      this.taskcreator.fire(hook, message.payload);
+    };
+
+    await this.Hook.scan({}, {
+      handler: hook => {
+        if (hook.pulseExchanges.length > 0) {        
+          var listener = new taskcluster.PulseListener({
+            connection: this.connection,
+            queueName: [hook.hookGroupId, '/', hook.hookId].join(''),
           });
-        });
+          
+          hook.pulseExchanges.forEach(pulses => {
+            console.log(`Binding to ${pulses.exchange} (${pulses.routingKeyPattern}) \
+                        for ${hook.hookGroupId}/${hook.hookId}`);
+            listener.bind({
+              exchange: pulses.exchange, 
+              routingKeyPattern: pulses.routingKeyPattern,
+            });
+          });
 
-        listener.on('message',
-          (message) => handleMessage(message, hook.hookGroupId, hook.hookId));
+          listener.on('message',
+            (message) => handleMessage(message, hook.hookGroupId, hook.hookId));
 
           listener.resume();
           this.listeners.push(listener);
@@ -96,6 +76,5 @@ class PulseMessages {
     });
   }
 }
-
 
 module.exports = PulseMessages;
